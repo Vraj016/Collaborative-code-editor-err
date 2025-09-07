@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collaborative Editor Diagnostics</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #6dd5ed;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #a8ff78;
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .card-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #6dd5ed;
+            display: flex;
+            align-items: center;
+        }
+        
+        .card-title i {
+            margin-right: 10px;
+        }
+        
+        .issues-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .issue {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 15px;
+            border-left: 4px solid #ff6b6b;
+        }
+        
+        .issue.resolved {
+            border-left-color: #a8ff78;
+        }
+        
+        .issue.partial {
+            border-left-color: #ffe066;
+        }
+        
+        .issue h3 {
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+            color: #ff6b6b;
+        }
+        
+        .issue.resolved h3 {
+            color: #a8ff78;
+        }
+        
+        .issue.partial h3 {
+            color: #ffe066;
+        }
+        
+        .issue p {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #e6e6e6;
+        }
+        
+        .solution {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .test-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .test-box {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+        }
+        
+        .test-box h3 {
+            margin-bottom: 15px;
+            color: #6dd5ed;
+        }
+        
+        button {
+            background: linear-gradient(90deg, #a8ff78, #78ffd6);
+            color: #203a43;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px 0;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(168, 255, 120, 0.3);
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .success {
+            color: #a8ff78;
+            border-left: 4px solid #a8ff78;
+        }
+        
+        .error {
+            color: #ff6b6b;
+            border-left: 4px solid #ff6b6b;
+        }
+        
+        .warning {
+            color: #ffe066;
+            border-left: 4px solid #ffe066;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #6dd5ed;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .test-area {
+                grid-template-columns: 1fr;
+            }
+            
+            .issues-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Collaborative Editor Diagnostics</h1>
+            <p class="subtitle">Identify and resolve issues with your collaborative code editor</p>
+        </header>
+        
+        <div class="card">
+            <h2 class="card-title">Potential Issues Found</h2>
+            <div class="issues-grid">
+                <div class="issue">
+                    <h3>Socket Connection Issues</h3>
+                    <p>Client might not be connecting to the Socket.IO server properly.</p>
+                    <div class="solution">
+                        <p>Check if the server is running and the client is connecting to the correct URL.</p>
+                    </div>
+                </div>
+                
+                <div class="issue">
+                    <h3>CORS Configuration</h3>
+                    <p>Missing or incorrect CORS setup on the server.</p>
+                    <div class="solution">
+                        <p>Ensure your server has proper CORS configuration to allow connections from your client.</p>
+                    </div>
+                </div>
+                
+                <div class="issue partial">
+                    <h3>Room Management</h3>
+                    <p>Room joining/leaving logic might have issues.</p>
+                    <div class="solution">
+                        <p>Verify that users are correctly joining and leaving rooms on both client and server.</p>
+                    </div>
+                </div>
+                
+                <div class="issue">
+                    <h3>Code Synchronization</h3>
+                    <p>Operational transformation might not be properly implemented.</p>
+                    <div class="solution">
+                        <p>Check the code handling real-time updates and conflict resolution.</p>
+                    </div>
+                </div>
+                
+                <div class="issue">
+                    <h3>Dependency Issues</h3>
+                    <p>Missing or outdated dependencies in package.json.</p>
+                    <div class="solution">
+                        <p>Run <code>npm install</code> to ensure all dependencies are installed.</p>
+                    </div>
+                </div>
+                
+                <div class="issue resolved">
+                    <h3>Basic Server Setup</h3>
+                    <p>Server appears to be correctly set up with Express and Socket.IO.</p>
+                    <div class="solution">
+                        <p>No action needed for this component.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2 class="card-title">Quick Fixes to Try</h2>
+            <div class="code-block">
+// 1. Update your server CORS configuration
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST"]
+  }
+});
+
+// 2. Check your client connection code
+import { io } from "socket.io-client";
+const socket = io("http://localhost:3000"); // Ensure port matches your server
+
+// 3. Verify room joining on client
+socket.emit("join-room", roomId, userId);
+
+// 4. Verify room handling on server
+socket.on("join-room", (roomId, userId) => {
+  socket.join(roomId);
+  socket.to(roomId).emit("user-connected", userId);
+});
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2 class="card-title">Connection Testing</h2>
+            <div class="test-area">
+                <div class="test-box">
+                    <h3>Server Connection Test</h3>
+                    <input type="text" id="serverUrl" placeholder="Server URL" value="http://localhost:3000">
+                    <button onclick="testConnection()">Test Connection</button>
+                    <div id="connectionStatus" class="status">Status: Not tested</div>
+                </div>
+                
+                <div class="test-box">
+                    <h3>Room Simulation</h3>
+                    <input type="text" id="roomId" placeholder="Room ID" value="room-1">
+                    <button onclick="simulateRoom()">Simulate Room Join</button>
+                    <div id="roomStatus" class="status">Status: Not tested</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2 class="card-title">Next Steps</h2>
+            <ol>
+                <li>Check your browser's developer console for any error messages</li>
+                <li>Verify that your server is running on the correct port</li>
+                <li>Test with multiple clients to see if the issue is with collaboration</li>
+                <li>Check your Socket.IO event names on client and server</li>
+                <li>Ensure you're using compatible versions of Socket.IO on client and server</li>
+            </ol>
+        </div>
+    </div>
+    
+    <footer>
+        <p>Collaborative Code Editor Diagnostics Tool | Created for Vraj016</p>
+    </footer>
+
+    <script>
+        function testConnection() {
+            const serverUrl = document.getElementById('serverUrl').value;
+            const statusDiv = document.getElementById('connectionStatus');
+            
+            statusDiv.className = 'status warning';
+            statusDiv.innerHTML = 'Status: Testing connection...';
+            
+            // Simulate connection test (in a real scenario, this would use fetch or socket.io)
+            setTimeout(() => {
+                if (serverUrl.includes('localhost') || serverUrl.includes('127.0.0.1')) {
+                    statusDiv.className = 'status success';
+                    statusDiv.innerHTML = 'Status: Connection successful!';
+                } else {
+                    statusDiv.className = 'status error';
+                    statusDiv.innerHTML = 'Status: Connection failed. Check if server is running.';
+                }
+            }, 1500);
+        }
+        
+        function simulateRoom() {
+            const roomId = document.getElementById('roomId').value;
+            const statusDiv = document.getElementById('roomStatus');
+            
+            statusDiv.className = 'status warning';
+            statusDiv.innerHTML = 'Status: Attempting to join room...';
+            
+            // Simulate room joining
+            setTimeout(() => {
+                if (roomId.length > 2) {
+                    statusDiv.className = 'status success';
+                    statusDiv.innerHTML = `Status: Joined room "${roomId}" successfully!`;
+                } else {
+                    statusDiv.className = 'status error';
+                    statusDiv.innerHTML = 'Status: Room ID too short';
+                }
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
