@@ -26,7 +26,7 @@ html, body, #root {
 /* Title Input */
 input {
   width: 40%;
-  max-width: 800px;
+  max-width: 700px;
   padding: 10px;
   font-size: 1.2em;
   border-radius: 5px;
@@ -40,7 +40,7 @@ input {
   height: 80vh; /* Takes up full height */
   border: 2px solid #646cff;
   border-radius: 10px;
-  background-color: black;
+  background-color: rgb(255, 255, 255);
   color: #00ff00;
   font-family: monospace;
   padding: 10px;
@@ -52,5 +52,16 @@ button {
   width: 250px;
   padding: 12px;
   font-size: 1.2em;
-  margin-top: 10px;
+  border-radius: 10px;
+  margin-top: 1px;
+  margin-bottom: 10px;
+}
+
+.language-badge {
+  padding: 6px 12px;
+  background: #1e1e1e;
+  border-radius: 6px;
+  color: #61dafb;
+  font-size: 14px;
+  border: 1px solid #444;
 }
